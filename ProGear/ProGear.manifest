@@ -1,0 +1,13 @@
+{
+  "autodeskProduct": "Fusion360",
+  "type": "addin",
+  "id": "13502a68-1bb2-43d0-936e-8d4451e81115",
+  "author": "ProGear contributors",
+  "description": {
+    "": "Parametric gear generator with live previews and metric presets."
+  },
+  "version": "1.0.0",
+  "runOnStartup": true,
+  "supportedOS": "windows|mac",
+  "editEnabled": true
+}

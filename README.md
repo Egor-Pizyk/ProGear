@@ -1,18 +1,135 @@
-# GF-Gear-Generator
-Main repo of the GF Gear Generator for Autodesk's Fusion 360.
+# ProGear 1.0 для Autodesk Fusion
 
-Dear reader,
+ProGear строит шестерни, рейки и пары передач в Autodesk Fusion. Геометрия появляется на холсте ещё до нажатия **OK**. После подтверждения Fusion сохраняет твёрдые тела, эскизы и операции в истории модели.
 
-I am excited to share one of my earliest programming projects with you. When I embarked on this journey of learning programming, I poured my time and dedication into this project, which holds a special place in my heart. While the code quality may not be the best, the effort and genuine care invested in it are undeniable.
+[Установка](#установка) · [Быстрый старт](#быстрый-старт) · [Команды](#команды) · [Размеры](#как-задать-размер) · [Настройки](#справочник-по-настройкам) · [Примеры](#примеры) · [Ошибки](#если-деталь-не-строится)
 
-As of 17/05/2023, I have made the decision to release this project as an open-source endeavor. My aim is to invite the community to contribute and enhance it further, making it a collaborative effort that benefits everyone.
+## Установка
 
-I truly believe that by opening up this project, we can collectively improve and refine it.
+Скопируйте всю папку [ProGear](ProGear) в каталог надстроек. Файлы `ProGear.py` и `ProGear.manifest` должны лежать непосредственно внутри неё, рядом с папкой `resources`.
 
-Thank you for joining me on this journey, and I look forward to witnessing the growth and evolution of this project together.
+| Система | Каталог надстроек |
+| --- | --- |
+| macOS | `~/Library/Application Support/Autodesk/Autodesk Fusion 360/API/AddIns/` |
+| Windows | `%APPDATA%\Autodesk\Autodesk Fusion 360\API\AddIns\` |
 
-*********************************************** 29/06/2023 Updates ************************************************
+В Fusion откройте **Utilities → Scripts and Add-Ins → Add-Ins**, выберите **ProGear** и нажмите **Run**. Если ProGear отсутствует в списке, нажмите **+** и укажите его папку. Панель появится в **Design → Solid → ProGear**. [Инструкция Autodesk по установке надстроек](https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/How-to-install-an-ADD-IN-and-Script-in-Fusion-360.html)
 
-The GFGG is about to undergo some great code quality improvements as it will follow the OOP structure I'm using for STLGears.com . To understand what will be changed I've added the UML diagram bellow so you can get an idea of the stuff that's to come:
+Откройте документ с включённой историей моделирования. В **Part Design** одиночные колёса и рейки создаются как тела в активном компоненте. В **Hybrid Design** они создаются в отдельных компонентах. Для конических и червячных пар откройте **Hybrid Design**. Чтобы изменить тип текущего документа, разверните **Document Settings** в дереве модели и выберите **Convert Design Type → Hybrid Design**. [Смена типа документа в Fusion](https://help.autodesk.com/cloudhelp/ENU/Fusion-Designs/files/ASM-CONVERT-DESIGN-TYPE.htm)
 
-![UML Diagram](./UML_Diagram.png)
+## Быстрый старт
+
+1. Откройте **Design → Solid → ProGear → Spur gear**.
+2. В **Size by** выберите **Tip diameter**. В поле **Diameter** введите `26 mm`, а в **Teeth** укажите `24`.
+3. Задайте **Face width** `8 mm` и **Pressure / flank angle** `20 deg`. При стандартной высоте головки зуба и нулевом смещении строка под настройками покажет модуль **1 мм**, делительный диаметр **24 мм** и диаметр по вершинам **26 мм**.
+4. Чтобы добавить отверстие под вал, раскройте **Tooth profile and machining** и задайте **Shaft bore diameter** `5 mm`.
+5. Нажмите **OK**, чтобы создать модель, или **Cancel**, чтобы убрать предпросмотр.
+
+В этом же сеансе Fusion команда вспомнит последние подтверждённые настройки этого типа. Для просмотра основных размеров включите видимость скрытого эскиза **Gear specification** в дереве модели. У пары он находится в общем родительском компоненте либо в компоненте колеса, если группировка выключена.
+
+## Команды
+
+| Команда | Что строит |
+| --- | --- |
+| **Spur gear** | Внешнее прямозубое цилиндрическое колесо |
+| **Helical / herringbone gear** | Внешнее косозубое или шевронное колесо с правой или левой линией зуба |
+| **90° bevel pair** | Два прямозубых конических колеса с осями под углом 90° |
+| **Straight / helical rack** | Прямую или косую рейку. Тип определяется углом **Helix angle** |
+| **Worm drive** | Однозаходный червяк с правой или левой навивкой и колесо типа **Helical** или **Hobbed straight** |
+| **Internal spur gear** | Кольцо с внутренними прямыми зубьями |
+| **Inverted internal spur gear** | Прямозубое внутреннее колесо с инвертированным профилем |
+| **Internal helical / herringbone gear** | Внутреннее косозубое или шевронное колесо |
+| **Inverted internal helical gear** | Внутреннее косозубое или шевронное колесо с инвертированным профилем |
+| **Profile-shifted spur gear** | Внешнее прямозубое колесо со смещением профиля |
+| **Profile-shifted helical gear** | Внешнее косозубое или шевронное колесо со смещением профиля |
+
+## Как задать размер
+
+| Режим **Size by** | Что вводить |
+| --- | --- |
+| **Metric presets** | Номинальный модуль из списка **Module preset**, например `m0.5 mm`, `m1.25 mm` или `m3 mm`. Число зубьев и ширину венца задайте отдельно. |
+| **Manual module** | Произвольный модуль в миллиметрах. Подходит, когда известен модуль детали, с которой должно работать колесо. |
+| **Pitch diameter** | Диаметр делительной окружности. ProGear рассчитает модуль по этому диаметру, числу зубьев и параметрам наклона. |
+| **Tip diameter** | Диаметр по вершинам зубьев. Для внешнего колеса это наружный диаметр по зубьям, для внутреннего — минимальный диаметр зубчатого отверстия. |
+| **Diametral pitch (teeth/in)** | Диаметральный шаг в зубьях на дюйм. Например, `25.4` соответствует модулю `1 mm`. |
+
+Для конической пары оба режима диаметра относятся к большому торцу колеса **Wheel**. Для червячной передачи они задают диаметр колеса. Для рейки используйте модуль или диаметральный шаг. В полях длины Fusion принимает выражения с единицами, например `0.5 in`.
+
+У прямозубого колеса делительный диаметр равен модулю, умноженному на число зубьев. У косозубого в этой формуле используется поперечный модуль. Поле **Module and angle measured in** определяет, в какой плоскости вводятся ручной модуль и угол давления. Для цилиндрических косозубых колёс и косых реек метрические пресеты задают нормальный модуль. При выборе **Transverse plane** ProGear пересчитывает его в поперечный.
+
+Список включает модули ISO 54:1996 для цилиндрических колёс, мелкие модули ряда I DIN 780-1 и модули ISO 678:1976 для прямозубых конических колёс. У червячных пар свой список стартовых метрических значений. [ISO 54](https://www.iso.org/standard/22644.html) · [DIN 780-1](https://www.dinmedia.de/en/standard/din-780-1/710428) · [ISO 678](https://www.iso.org/standard/4846.html)
+
+## Справочник по настройкам
+
+| Поле | Что меняет |
+| --- | --- |
+| **Teeth**, **Wheel teeth**, **Pinion teeth** | Число зубьев колеса, рейки или соответствующего колеса конической пары. Диапазон ввода от 6 до 250. Допустимость профиля зависит от остальных параметров. |
+| **Face width** | Ширину венца вдоль оси колеса или ширину рейки поперёк её длины. У шевронного колеса это суммарная ширина обеих половин. |
+| **Face width on pitch cone** | Ширину венца конической пары вдоль образующей делительного конуса. |
+| **Pressure / flank angle** | Угол давления, который влияет на форму боковой поверхности зуба. По умолчанию 20°, диапазон от 10° до 35°. |
+| **Helix angle**, **Left-hand helix** | Наклон зубьев и направление линии зуба или навивки. Ввод угла от 0° до значения меньше 89,5°. У червячной пары ProGear рассчитывает угол по модулю и радиусу сердцевины. |
+| **Herringbone (double helix)** | Две встречные линии зуба на одном колесе. Задайте ненулевой **Helix angle**. |
+| **Ring wall thickness**, **Rack base thickness** | Толщину обода кольца за впадинами или толщину основания рейки под зубьями. |
+| **Worm core radius**, **Worm length** | Радиус сердцевины и полную осевую длину червяка. Минимальная длина равна одному осевому шагу, `π × модуль`. |
+| **Put both gears in one parent component** | Включено по умолчанию. Помещает оба компонента пары внутрь одного родителя. При выключении оба компонента создаются на одном уровне под активным компонентом. |
+
+Дополнительные параметры находятся в **Tooth profile and machining**. Набор полей зависит от команды.
+
+| Поле | Что меняет |
+| --- | --- |
+| **Addendum (× module)** | Высоту головки зуба от делительной окружности. При модуле 2 мм и значении 1 высота составляет 2 мм для прямозубого колеса без смещения профиля. |
+| **Dedendum (× module)** | Глубину ножки зуба от делительной окружности. Значение 1,25 при модуле 2 мм даёт 2,5 мм для прямозубого колеса без смещения. |
+| **Profile shift coefficient** | Смещение профиля внешнего цилиндрического колеса. Диапазон от −1 до 1, доступное значение также зависит от высоты зуба. |
+| **Pitch-line tooth thinning** | Величину уменьшения толщины зуба на делительной линии в миллиметрах. У внутреннего колеса расширяет впадины. |
+| **Shaft bore diameter**, **Pinion bore diameter** | Диаметр сквозного отверстия. Ноль отключает отверстие. Для конической пары каждое отверстие должно помещаться внутри окружности впадин на малом торце. |
+| **Tooth tip chamfer distance**, **Tooth tip chamfer angle** | Размер и угол снятия материала с вершин зубьев на обоих торцах. Нулевая величина отключает фаску. |
+| **Pinion axial offset (× module)** | Осевое смещение конической шестерни **Pinion** для монтажного зазора. По умолчанию `0.2 × модуль`. |
+| **Center-distance increase (× module)** | Прибавку к межосевому расстоянию червячной пары. По умолчанию `0.15 × модуль`. |
+| **Fast involute calculation** | Уменьшает число точек, по которым строится эвольвентный контур, и ускоряет построение. |
+
+## Примеры
+
+### Внутреннее колесо под заданный диаметр зубчатого отверстия
+
+Откройте **Internal spur gear**. Выберите **Size by → Tip diameter** и укажите `46 mm`, **Teeth** `48`, **Face width** `8 mm` и **Ring wall thickness** `5 mm`. При стандартном профиле модуль получится **1 мм**, делительный диаметр **48 мм**, а наружный диаметр обода **60,5 мм**.
+
+### Шевронное колесо
+
+Откройте **Helical / herringbone gear**. Выберите модуль `m1 mm`, **Normal plane**, **Teeth** `24`, **Helix angle** `15 deg` и **Face width** `8 mm`. Включите **Herringbone (double helix)**. ProGear построит две половины шириной по 4 мм с противоположным наклоном зубьев.
+
+### Коническая пара под 90°
+
+В **Hybrid Design** откройте **90° bevel pair**. Выберите `m1 mm` в серии ISO 678 I, задайте **Wheel teeth** `24`, **Pinion teeth** `18` и **Face width on pitch cone** `5 mm`. Оставьте **Pinion axial offset** `0.2` и включите **Put both gears in one parent component**. В дереве модели появится общий компонент с двумя колёсами.
+
+### Прямая рейка
+
+Откройте **Straight / helical rack**. Задайте модуль `m1 mm`, **Teeth** `20`, **Helix angle** `0 deg`, **Face width** `8 mm` и **Rack base thickness** `5 mm`. Шаг зубьев получится около **3,142 мм**, длина рейки — около **62,83 мм**.
+
+### Червячная пара
+
+В **Hybrid Design** откройте **Worm drive**. Выберите **Wheel tooth form → Helical**, модуль `m1 mm`, **Transverse plane** и **Teeth** `24`. Задайте **Worm core radius** `5 mm`, **Worm length** `20 mm` и **Face width** `8 mm`. Для колеса с профилем, полученным моделированием нарезания червячной фрезой, выберите **Hobbed straight**. В этом режиме форму зубьев определяет инструмент, а часть ручных настроек формы скрывается.
+
+## Если деталь не строится
+
+| Что видно в Fusion | Что проверить |
+| --- | --- |
+| Панель **ProGear** не появилась | Откройте **Scripts and Add-Ins → Add-Ins**, проверьте путь к папке и нажмите **Run**. Откройте рабочую область **Design → Solid**. |
+| **Use a Hybrid Design…** | Переключите тип документа на **Hybrid Design**. |
+| **Use a design with Capture Design History enabled.** | Используйте документ с включённой историей моделирования. |
+| **Teeth cross or vanish.** | Верните **Addendum** к 1, **Dedendum** к 1,25, угол давления к 20°, а утонение к 0. Затем меняйте параметры по одному и следите за строкой состояния. |
+| Ошибка отверстия или фаски | Уменьшите диаметр отверстия или размер фаски. Для проверки исходного профиля задайте нулевое значение. |
+| Предпросмотр строится долго | Выключите **Live 3D preview**. Модель будет построена при нажатии **OK**. Для эвольвентных колёс можно оставить включённым **Fast involute calculation**. |
+
+## Границы модели
+
+Конические колёса строятся по приближённому профилю с масштабированием сечений вдоль делительного конуса. Ниже основной окружности цилиндрический профиль продолжается радиально. Метрические пресеты задают номинальные модули. Проверка в Fusion на macOS охватывала построение всех семейств и статические пересечения тестовых пар при штатных монтажных зазорах. Контакт на полном обороте, прочность и производственные допуски проверяются отдельно для конкретной пары.
+
+## Исходный код
+
+ProGear основан на [GF Gear Generator](https://github.com/CenturySturgeon/GF-Gear-Generator) и сохраняет алгоритм построения червяка и нарезанного им колеса. Лицензия BSD 3-Clause находится в [ProGear/LICENSE](ProGear/LICENSE).
+
+- [ProGear.py](ProGear/ProGear.py) описывает команды и диалоги Fusion.
+- [gear_math.py](ProGear/gear_math.py) содержит расчёт размеров и профилей.
+- [model.py](ProGear/model.py) и [worm.py](ProGear/worm.py) создают геометрию в Fusion.
+
+Тесты расчётов запускаются вне Fusion командой `python3 -m unittest discover -s tests -v`.
